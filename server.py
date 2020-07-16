@@ -7,10 +7,17 @@ from collections import deque
 
 
 def game(white, black):
+    white.send(bytes('You are white', 'utf-8'))
+    black.send(bytes('You are black', 'utf-8'))
     while True:
-        white.send(bytes('You are white', 'utf-8'))
-        black.send(bytes('You are black', 'utf-8'))
-        break
+        white_move = white.recv(4096)
+        if white_move.decode('utf-8') == 'lost':
+            break
+        black.send(white_move)
+        black_move = black.recv(4096)
+        if black_move.decode('utf-8') == 'lost':
+            break
+        white.send(black_move)
 
 
 if __name__ == '__main__':
