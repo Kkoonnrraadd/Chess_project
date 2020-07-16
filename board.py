@@ -75,58 +75,29 @@ class Board:
 
 class King(Piece):
     def legal_moves(self, new_position):
-        potential_moves += [(x + 1, y),(x + 1, y + 1),(x, y + 1),(x - 1, y + 1),(x - 1, y),(x - 1, y - 1),(x, y - 1),(x + 1, y - 1)]
         pass
 
 
-class Queen(Piece): # to moze sie ruszac wszedzie to kombinacja bishop i rook funckji
+class Queen(Piece):
     def legal_moves(self, new_position):
-        move = [(x + j, y + i) for i,j in range(1, 8) if 0 <= x < 8 and 0 <= y < 8]
-        
         pass
 
 
-class Rook(Piece): # znalazlem cos takiego dla xy jaki nasze pozycje np.b3
+class Rook(Piece): 
     def legal_moves(self, new_position):
-        u = [(x, y + i) for i in range(1, 8) if 0 <= x < 8 and 0 <= y < 8]
-        d = [(x, y - i) for i in range(1, 8) if 0 <= x < 8 and 0 <= y < 8]
-        l = [(x - i, y) for i in range(1, 8) if 0 <= x < 8 and 0 <= y < 8]
-        r = [(x + i, y) for i in range(1, 8) if 0 <= x < 8 and 0 <= y < 8]
-        potential_moves += u + d + l + r
         pass
 
 
 class Bishop(Piece):
     def legal_moves(self, new_position):
-        ur = [(x + i, y + i) for i in range(1, 8) if 0 <= x < 8 and 0 <= y < 8]
-        dr = [(x + i, y - i) for i in range(1, 8) if 0 <= x < 8 and 0 <= y < 8]
-        ul = [(x - i, y + i) for i in range(1, 8) if 0 <= x < 8 and 0 <= y < 8]
-        dl = [(x - i, y - i) for i in range(1, 8) if 0 <= x < 8 and 0 <= y < 8]
-        potential_moves += ur + dr + ul + dl
         pass
 
 
 class Knight(Piece):
     def legal_moves(self, new_position):
-        potential_moves += [(x + 2, y + 1), (x + 2, y - 1)
-            , (x + 1, y + 2), (x + 1, y - 2)
-            , (x - 2, y - 1), (x - 2, y + 1)
-            , (x - 1, y + 2), (x - 1, y - 2)]
         pass
 
 
 class Pawn(Piece):
     def legal_moves(self, new_position):
-        if which_color(1) and x == 6:
-            potential_moves = [(x - 2, y)]
-
-        elif which_color(0) and x == 1:
-            potential_moves = [(x + 2, y)]
-
-        elif which_color(1):
-            potential_moves = [(x - 1, y)]
-
-        elif which_color(0):
-            potential_moves = [(x + 1, y)]
-
         pass
