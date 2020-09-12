@@ -15,7 +15,7 @@ def move():
 if __name__ == '__main__':
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     board = chess.Board()
-    s.connect(('192.168.100.55', 6789))
+    s.connect(('127.0.0.1', 6789))
     print(s.recv(4096).decode('utf-8'))  # 'You are in queue' message
     color = s.recv(4096).decode('utf-8')
     print(color)
