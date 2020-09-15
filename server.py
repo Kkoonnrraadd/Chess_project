@@ -88,6 +88,60 @@ log.addHandler(handler)
 #my_logger.setLevel(logging.DEBUG)
 #handler = logging.handlers.SysLogHandler(address = './log.log')
 #my_logger.addHandler(handler)
+'''
+class Daemon(object):
+    """ Linux Daemon boilerplate. """
+    def __init__(self, pid_file,
+                 stdout='/var/log/daemon_example_out.log',
+                 stderr='/var/log/daemon_example_err.log'):
+        self.stdout = stdout
+        self.stderr = stderr
+        self.pid_file = pid_file
+
+    def del_pid(self):
+        os.remove(self.pid_file)
+
+    def daemonize(self):
+        # fork 1 to spin off the child that will spawn the deamon.
+        if os.fork():
+            sys.exit()
+        os.chdir("/")
+        os.setsid()
+        os.umask(0)
+
+        # fork 2 ensures we can't get a controlling ttd.
+        if os.fork():
+            sys.exit()
+
+        # stdin
+        with open('/dev/null', 'r') as dev_null:
+            os.dup2(dev_null.fileno(), sys.stdin.fileno())
+
+        # stderr - do this before stdout so that errors about setting stdout write to the log file.
+        #
+        # Exceptions raised after this point will be written to the log file.
+        sys.stderr.flush()
+        with open(self.stderr, 'a+', 0) as stderr:
+            os.dup2(stderr.fileno(), sys.stderr.fileno())
+
+        # stdout
+        #
+        # Print statements after this step will not work. Use sys.stdout
+        # instead.
+        sys.stdout.flush()
+        with open(self.stdout, 'a+', 0) as stdout:
+            os.dup2(stdout.fileno(), sys.stdout.fileno())
+
+        # Write pid file
+        # Before file creation, make sure we'll delete the pid file on exit!
+        atexit.register(self.del_pid)
+        pid = str(os.getpid())
+        with open(self.pid_file, 'w+') as pid_file:
+            pid_file.write('{0}'.format(pid))
+'''
+
+
+
 
 def game(white, black):
     white.send(bytes('You are white', 'utf-8'))
