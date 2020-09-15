@@ -4,26 +4,29 @@ import logging
 import logging.handlers
 from collections import deque
 
+my_logger = logging.getLogger(__name__)
+my_logger.setLevel(logging.DEBUG)
+handler = logging.handlers.SysLogHandler(address="/dev/log")
+my_logger.addHandler(handler)
+
 
 def game(white, black):
     white.send(bytes('You are white', 'utf-8'))
     black.send(bytes('You are black', 'utf-8'))
     while True:
         white_move = white.recv(4096)
+        my_logger.debug(f"White's move: {white_move}")
         if white_move.decode('utf-8') == 'lost':
             break
         black.send(white_move)
         black_move = black.recv(4096)
+        my_logger.debug(f"Black's move: {black_move}")
         if black_move.decode('utf-8') == 'lost':
             break
         white.send(black_move)
 
 
 if __name__ == '__main__':
-    my_logger = logging.getLogger('MyLogger')
-    my_logger.setLevel(logging.DEBUG)
-    handler = logging.handlers.SysLogHandler(address="/dev/log")
-    my_logger.addHandler(handler)
 
     queue = deque([])
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
