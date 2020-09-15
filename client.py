@@ -1,5 +1,6 @@
 import socket
 import chess
+import argparse
 
 
 def move():
@@ -10,6 +11,17 @@ def move():
             return moved
         except ValueError:
             print('Illegal move')
+
+
+def is_game_over(board):
+    if board.is_game_over():
+        result = board.result()
+        if result == "1-0":
+            return "White wins"
+        elif result == "0-1":
+            return "Black wins"
+        return "It's a draw"
+    return False
 
 
 def add_coordinates(board, black=False):
@@ -26,10 +38,14 @@ def add_coordinates(board, black=False):
     return '\n'.join(coord_board)
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("ip", help="Please specify the server's IP address")
+args = parser.parse_args()
+
 if __name__ == '__main__':
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     board = chess.Board()
-    s.connect(('127.0.0.1', 6789))
+    s.connect((args.ip, 6789))
     print(s.recv(4096).decode('utf-8'))  # 'You are in queue' message
     color = s.recv(4096).decode('utf-8')
     print(color + '\n')
@@ -41,14 +57,18 @@ if __name__ == '__main__':
             white_move = move()
             print(add_coordinates(board), end='\n\n')
             s.send(bytes(white_move.uci(), 'utf-8'))
-            if board.is_checkmate():
-                print('You win')
+
+            result = is_game_over(board)
+            if result:
+                print(result)
                 break
             black_move = s.recv(4096).decode('utf-8')
             board.push_uci(black_move)
             print(f'Black played {black_move}')
-            if board.is_checkmate():
-                print('You lose')
+
+            result = is_game_over(board)
+            if result:
+                print(result)
                 s.send(bytes('lost', 'utf-8'))
                 break
 
@@ -58,13 +78,17 @@ if __name__ == '__main__':
             board.push_uci(white_move)
             print(f'White played {white_move}')
             print(add_coordinates(board, True)[::-1], end='\n\n')
-            if board.is_checkmate():
-                print('You lose')
+
+            result = is_game_over(board)
+            if result:
+                print(result)
                 s.send(bytes('lost', 'utf-8'))
                 break
             black_move = move()
             s.send(bytes(black_move.uci(), 'utf-8'))
             print(add_coordinates(board, True)[::-1], end='\n\n')
-            if board.is_checkmate():
-                print('You win')
+
+            result = is_game_over(board)
+            if result:
+                print(result)
                 break
