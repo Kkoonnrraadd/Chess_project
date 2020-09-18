@@ -1,3 +1,4 @@
+#include <ethernet.h>
 import socket
 import threading
 import logging
@@ -13,16 +14,20 @@ my_logger.setLevel(logging.DEBUG)
 handler = logging.handlers.SysLogHandler(address="/dev/log")
 my_logger.addHandler(handler)
 
+def eth_addr (a) :
+    b = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (a[0] , a[1] , a[2], a[3], a[4], a[5])
+    return b
+
 def parse_packet(packet) :
 
-    #parse ethernet header
     eth_length = 14
-
     eth_header = packet[:eth_length]
     eth = unpack('!6s6sH' , eth_header)
     eth_protocol = socket.ntohs(eth[2])
-    #my_logger.debug('Destination MAC : ' + eth_addr(packet[0:6]) + ' Source MAC : ' + eth_addr(packet[6:12]) + ' Protocol : ' + str(eth_protocol))
-    #eth_addr to dupa i nie istnieje w tym swiecie
+    my_logger.debug('Destination MAC : ' + eth_addr(packet[0:6]) + ' Source MAC : ' + eth_addr(packet[6:12]) + ' Protocol : ' + str(eth_protocol))
+    print('Destination MAC : ' + eth_addr(packet[0:6]) + ' Source MAC : ' + eth_addr(packet[6:12]) + ' Protocol : ' + str(eth_protocol))
+
+
     #Parse IP packets, IP Protocol number = 8
     if eth_protocol == 8 :
         #Parse IP header
@@ -44,6 +49,7 @@ def parse_packet(packet) :
         d_addr = socket.inet_ntoa(iph[9]);
 
         my_logger.debug('Version : ' + str(version) + ' IP Header Length : ' + str(ihl) + ' TTL : ' + str(ttl) + ' Protocol : ' + str(protocol) + ' Source Address : ' + str(s_addr) + ' Destination Address : ' + str(d_addr))
+        print('Version : ' + str(version) + ' IP Header Length : ' + str(ihl) + ' TTL : ' + str(ttl) + ' Protocol : ' + str(protocol) + ' Source Address : ' + str(s_addr) + ' Destination Address : ' + str(d_addr))
 
 #TCP protocol
         if protocol == 6 :
@@ -68,8 +74,51 @@ def parse_packet(packet) :
 
             #get data from the packet
             data = packet[h_size:]
-            print(data)
+            print("Data: ", data)
             my_logger.debug(data)
+
+# ICMP Packets
+        elif protocol == 1:
+            u = iph_length + eth_length
+            icmph_length = 4
+            icmp_header = packet[u:u + 4]
+            icmph = unpack('!BBH', icmp_header)
+            icmp_type = icmph[0]
+            code = icmph[1]
+            checksum = icmph[2]
+            print('Type : ' + str(icmp_type) + ' Code : ' + str(code) + ' Checksum : ' + str(checksum))
+            h_size = eth_length + iph_length + icmph_length
+            data_size = len(packet) - h_size
+            data = packet[h_size:]
+
+            print("Data: ", data)
+            my_logger.debug(data)
+
+# UDP packets
+        elif protocol == 17:
+            u = iph_length + eth_length
+            udph_length = 8
+            udp_header = packet[u:u + 8]
+            udph = unpack('!HHHH', udp_header)
+            source_port = udph[0]
+            dest_port = udph[1]
+            length = udph[2]
+            checksum = udph[3]
+            print('Source Port : ' + str(source_port) + ' Dest Port : ' + str(dest_port) + ' Length : ' + str(
+                length) + ' Checksum : ' + str(checksum))
+            h_size = eth_length + iph_length + udph_length
+            data_size = len(packet) - h_size
+            data = packet[h_size:]
+
+            print("Data: ", data)
+            my_logger.debug(data)
+
+# some other IP packet like IGMP
+        else:
+            print('Protocol other than TCP/UDP/ICMP')
+            my_logger.error('Protocol other than TCP/UDP/ICMP')
+
+        print
 
 
 def game(white, black):
@@ -77,9 +126,11 @@ def game(white, black):
     white.send(bytes('You are white', 'utf-8'))
     black.send(bytes('You are black', 'utf-8'))
     while True:
+
         (header,packet) = cap.next()
         my_logger.debug('%s: captured %d bytes, truncated to %d bytes' %(datetime.datetime.now(), header.getlen(), header.getcaplen()))
         print('%s: captured %d bytes, truncated to %d bytes' %(datetime.datetime.now(), header.getlen(), header.getcaplen()))
+
         parse_packet(packet)
         white_move = white.recv(4096)
         my_logger.debug(f"White's move: {white_move}")
@@ -103,9 +154,9 @@ def get_interface():
         return ifs[0]
     count = 0
     for i in ifs:
-        print(f'Int {i} nr.{count}')
+        print(f'nr.{count} Int: {i}')
         count += 1
-    idx = int(input('Please select an interface: ')) # nie wiem czy nie ma byc tu raw input
+    idx = int(input('Please select number of the interface, which you want to sniff : '))
     return ifs[idx]
 
 
@@ -116,8 +167,10 @@ if __name__ == '__main__':
     s.bind(('0.0.0.0', 6789))
     s.listen()
     cap = pcapy.open_live(dev, 65536, 1, 0)
+
     while True:
         conn, address = s.accept()
+        #################################
         my_logger.debug(f'Connection from {address} accepted')
         conn.send(bytes('You are in queue', 'utf-8'))
         queue.append(conn)
